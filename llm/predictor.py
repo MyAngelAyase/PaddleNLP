@@ -575,7 +575,7 @@ class StaticInferencePredictor(InferencePredictorMixin, BasePredictor):
         for k, v in inputs.items():
             input_tensor = self.predictor.get_input_handle(k)
             
-            if "mask" in k:
+            if "mask" in k or "position" in k:
                 input_tensor.share_external_data(v)
             else:
                 if paddle.is_tensor(v):
