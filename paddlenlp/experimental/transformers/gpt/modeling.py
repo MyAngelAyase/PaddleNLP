@@ -16,7 +16,7 @@ from __future__ import annotations
 import paddle
 from paddle import nn
 from paddle.distributed import fleet
-from paddlenlp_ops import get_padding_offset
+from paddle_custom_device.npu import get_padding_offset
 
 from paddlenlp.experimental.transformers.fused_transformer_layers import (
     FusedMultiTransformer,
