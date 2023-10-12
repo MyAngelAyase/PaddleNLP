@@ -18,7 +18,7 @@ import paddle
 from paddle import nn
 from paddle.distributed import fleet
 from paddle.nn.quant import weight_quantize
-from paddlenlp_ops import fused_get_rotary_embedding, get_padding_offset
+from paddle_custom_device.npu import fused_get_rotary_embedding, get_padding_offset
 
 from paddlenlp.experimental.transformers.fused_transformer_layers import (
     FusedMultiTransformer,
@@ -32,7 +32,10 @@ from paddlenlp.transformers.model_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
     CausalLMOutputWithCrossAttentions,
 )
-from paddlenlp.transformers.model_utils import register_base_model
+from paddlenlp.transformers.model_utils import (
+    dy2st_nocheck_guard_context,
+    register_base_model,
+)
 
 __all__ = ["LlamaInferenceModel", "LlamaForCausalLMInferenceModel", "LlamaForMiniGPT4InferenceModel"]
 
@@ -286,7 +289,7 @@ class LlamaInferenceModel(LlamaPretrainedModel):
             input_ids, position_ids, self.head_dim_shape_tensor, position_offset, True
         )
 
-        with paddle.base.framework._stride_in_no_check_dy2st_diff():
+        with dy2st_nocheck_guard_context():
             hidden_states, _ = self.transformer_block(
                 input_ids,
                 hidden_states,
