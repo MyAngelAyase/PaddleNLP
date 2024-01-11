@@ -543,11 +543,12 @@ class LlamaInferenceModel(LlamaPretrainedModel):
                 self.transformer_block.linear_weights[idx].set_value(linear_quanted_weight_tensor)
                 self.transformer_block.linear_weights_scale[idx].set_value(linear_weight_scale_tensor)
             elif self.quant_type == "a8w8":
+                linear_weight = state_dict["llama.layers.{}.self_attn.o_proj.weight".format(idx)]
+                linear_old_shape = linear_weight.shape
+                linear_weight = linear_weight.reshape([linear_old_shape[1], linear_old_shape[0]])
                 self.transformer_block.linear_weights[idx].set_value(
                     paddle.cast(
-                        paddle.to_tensor(state_dict["llama.layers.{}.self_attn.o_proj.weight".format(idx)]).transpose(
-                            (1, 0)
-                        ),
+                        paddle.to_tensor(linear_weight),
                         "int8",
                     )
                 )
@@ -564,8 +565,10 @@ class LlamaInferenceModel(LlamaPretrainedModel):
                 self.transformer_block.ffn1_weights[idx].set_value(ffn1_quanted_weight_tensor)
                 self.transformer_block.ffn1_weights_scale[idx].set_value(ffn1_weight_scale_tensor)
             elif self.quant_type == "a8w8":
+                ffn1_old_shape = concated_ffn1_weight.shape
+                concated_ffn1_weight = concated_ffn1_weight.reshape([ffn1_old_shape[1], ffn1_old_shape[0]])
                 self.transformer_block.ffn1_weights[idx].set_value(
-                    paddle.cast(paddle.to_tensor(concated_ffn1_weight).transpose((1, 0)), "int8")
+                    paddle.cast(paddle.to_tensor(concated_ffn1_weight), "int8")
                 )
             else:
                 self.transformer_block.ffn1_weights[idx].set_value(ffn1_weight_tensor)
@@ -581,11 +584,12 @@ class LlamaInferenceModel(LlamaPretrainedModel):
                 self.transformer_block.ffn2_weights[idx].set_value(ffn2_quanted_weight_tensor)
                 self.transformer_block.ffn2_weights_scale[idx].set_value(ffn2_weight_scale_tensor)
             elif self.quant_type == "a8w8":
+                ffn2_weight = state_dict["llama.layers.{}.mlp.down_proj.weight".format(idx)]
+                ffn2_old_shape = ffn2_weight.shape
+                ffn2_weight = ffn2_weight.reshape([ffn2_old_shape[1], ffn2_old_shape[0]])
                 self.transformer_block.ffn2_weights[idx].set_value(
                     paddle.cast(
-                        paddle.to_tensor(state_dict["llama.layers.{}.mlp.down_proj.weight".format(idx)]).transpose(
-                            (1, 0)
-                        ),
+                        paddle.to_tensor(ffn2_weight),
                         "int8",
                     )
                 )
