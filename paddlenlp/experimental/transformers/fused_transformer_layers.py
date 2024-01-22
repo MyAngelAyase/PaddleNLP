@@ -465,8 +465,9 @@ class FusedMultiTransformerBase(Layer):
                 cache_k_out_scale = self.create_parameter(
                     shape=[self.num_heads*self.head_dim],
                     attr=cache_k_out_scale_attr,
-                    dtype='float16',
+                    dtype='int64',
                     is_bias=False,
+                    default_initializer=paddle.nn.initializer.Constant(0),
                 )
             
             cache_v_out_scale = None
@@ -474,8 +475,9 @@ class FusedMultiTransformerBase(Layer):
                 cache_v_out_scale = self.create_parameter(
                     shape=[self.num_heads*self.head_dim],
                     attr=cache_v_out_scale_attr,
-                    dtype='float16',
+                    dtype='int64',
                     is_bias=False,
+                    default_initializer=paddle.nn.initializer.Constant(0),
                 )
 
             # tensor model parallel

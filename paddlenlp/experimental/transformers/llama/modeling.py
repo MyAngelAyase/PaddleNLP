@@ -63,9 +63,9 @@ __all__ = ["LlamaInferenceModel", "LlamaForCausalLMInferenceModel", "LlamaForCau
 
 def process_deq_scale(deq_scale) -> np.ndarray:
     # print(deq_scale)
-    arr = deq_scale.numpy()
+    # arr = deq_scale.numpy()
     # print(arr)
-    new_deq_scale = np.frombuffer(arr.tobytes(), dtype=np.uint32)
+    new_deq_scale = np.frombuffer(deq_scale.tobytes(), dtype=np.uint32)
     result = paddle.to_tensor(new_deq_scale.astype(np.int64))
     return result
 
@@ -725,13 +725,13 @@ class LlamaInferenceModel(LlamaPretrainedModel):
                                 weight_scale = np.repeat(weight_scale, 128)
                                 self.transformer_block.cache_v_scales[i_layer].set_value(weight_scale)
                             elif k == "cache_k_out_scale":
-                                weight_scale = weight_scale.astype("float16")
+                                weight_scale = weight_scale.astype("float32")
                                 weight_scale = np.repeat(weight_scale, 128)
-                                self.transformer_block.cache_k_out_scales[i_layer].set_value(weight_scale)
+                                self.transformer_block.cache_k_out_scales[i_layer].set_value(process_deq_scale(weight_scale))
                             else:
-                                weight_scale = weight_scale.astype("float16")
+                                weight_scale = weight_scale.astype("float32")
                                 weight_scale = np.repeat(weight_scale, 128)
-                                self.transformer_block.cache_v_out_scales[i_layer].set_value(weight_scale)
+                                self.transformer_block.cache_v_out_scales[i_layer].set_value(process_deq_scale(weight_scale))
                                 
                 for k, v in weight_scales_loader.scale.items():
                     if "qkv_" in k:
@@ -742,7 +742,7 @@ class LlamaInferenceModel(LlamaPretrainedModel):
 
                             if self.config.tensor_parallel_degree > 1 and self.config.single_card_ptq:
                                 tmp = tmp.reshape([3, self.num_attention_heads, head_size]).split(self.config.tensor_parallel_degree, axis=1)[self.config.tensor_parallel_rank].reshape([-1])
-                            self.transformer_block.qkv_out_scales[i_layer].set_value(process_deq_scale(tmp))
+                            self.transformer_block.qkv_out_scales[i_layer].set_value(process_deq_scale(tmp.numpy()))
                         pass
                     elif "out_linear_" in k:
                         for i_layer, weight_scale in enumerate(v):
@@ -750,7 +750,7 @@ class LlamaInferenceModel(LlamaPretrainedModel):
                                     weight_scale
                                     / (127.0 * 127.0 * act_scale_loader.scale["out_linear_in_scale"][i_layer])
                                 )
-                            self.transformer_block.linear_out_scales[i_layer].set_value(process_deq_scale(tmp))
+                            self.transformer_block.linear_out_scales[i_layer].set_value(process_deq_scale(tmp.numpy()))
                     elif "ffn1_weight_scale" in k:
                         for i_layer, weight_scale in enumerate(v):
                             tmp = paddle.to_tensor(
@@ -760,7 +760,7 @@ class LlamaInferenceModel(LlamaPretrainedModel):
                                 tmp = paddle.split(tmp, self.config.tensor_parallel_degree * 2)
                                 tmp = paddle.concat([tmp[self.config.tensor_parallel_rank], tmp[self.config.tensor_parallel_rank + self.config.tensor_parallel_degree]], axis=0)
                             self.transformer_block.ffn1_out_scales[i_layer].set_value(
-                                process_deq_scale(tmp)
+                                process_deq_scale(tmp.numpy())
                             )
                     elif "ffn2" in k:
                         for i_layer, weight_scale in enumerate(v):
@@ -768,7 +768,7 @@ class LlamaInferenceModel(LlamaPretrainedModel):
                                     weight_scale / (127.0 * 127.0 * act_scale_loader.scale["ffn2_in_scale"][i_layer])
                                 )
                             self.transformer_block.ffn2_out_scales[i_layer].set_value(
-                                process_deq_scale(tmp)
+                                process_deq_scale(tmp.numpy())
                             )
 
 @register_base_model
