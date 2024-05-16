@@ -397,7 +397,12 @@ def dybatch_preprocess(
 
         for text in texts:
             tokens = tokenizer(text, return_tensors="np", padding=True)
-            input_ids.append(tokens["input_ids"][0])
+            #input_ids.append(tokens["input_ids"][0])
+            input_ids_ = tokens["input_ids"]
+            if input_ids_.shape[1] > max_length:
+                input_ids_ = input_ids_[:, input_ids_.shape[1] - max_length + 1 :]
+            input_ids.append(input_ids_[0])
+
             position_ids.append(tokens["position_ids"][0])
 
         inputs = {}
