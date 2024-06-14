@@ -1,0 +1,44 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef ASCEND_SPEED_INFERENCE_LINEAR_PARALLEL_W8A16_H
+#define ASCEND_SPEED_INFERENCE_LINEAR_PARALLEL_W8A16_H
+
+#include <atb/atb_infer.h>
+
+namespace atb_speed {
+namespace contrib {
+struct LinearParallelW8A16Param {
+    bool transWeight = false;
+    int rank = 0;
+    int rankSize = 0;
+    int rankRoot = 0;
+    bool isBias = true;
+    std::string parallelType = "RowParallel";
+    std::string backend = "hccl";
+    HcclComm hcclComm = nullptr; // only effect when hcclComm is not null
+    bool isQuant= true;
+    bool isPrefill = false;
+    std::string hcomm_info = ""; 
+};
+
+atb::Status CreateLinearParallelW8A16(const LinearParallelW8A16Param &param, atb::Operation **operation, bool transB);
+} // namespace contrib
+} // namespace atb_speed
+
+#endif
+
+
